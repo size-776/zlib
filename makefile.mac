@@ -1,0 +1,73 @@
+# 20260919 sqlite3 makefile for macOS/iOS
+
+# Target Architecture for physical iOS devices (use 'x86_64' or 'arm64' with iphonesimulator for Simulators)
+PLATFORM ?= macosx
+#iphoneos iphonesimulator?
+ARCH ?= x86_64
+#arm64
+
+MIN_VERSION ?= 15.0
+ifeq ($(PLATFORM), macosx)
+MIN_VERSION = 12.0
+endif
+
+# Use Apple Clang via xcrun
+CC = xcrun -sdk $(PLATFORM) clang
+CXX = xcrun -sdk $(PLATFORM) clang++
+CPP = $(CXX)
+LINK = xcrun -sdk $(PLATFORM) clang
+AR = xcrun -sdk $(PLATFORM) ar
+
+RELEASE ?= 0
+BUILD= Debug
+FLAGS += -O0 -g -D_DEBUG
+
+ifeq ($(RELEASE), 1)
+BUILD= Release
+FLAGS = -O3 -Wl,-S -DNDEBUG
+endif
+
+# Get the absolute path to the SDK dynamically
+SDK_PATH = $(shell xcrun --sdk $(PLATFORM) --show-sdk-path)
+
+OUTPATH = ./bin/$(PLATFORM)_$(ARCH)_$(BUILD)
+
+# specific target flags and SDK pathing
+TARGET_FLAGS = -arch $(ARCH) -m$(PLATFORM)-version-min=$(MIN_VERSION) -isysroot $(SDK_PATH)
+
+FLAGS += $(TARGET_FLAGS) -I../zlib
+CFLAGS = -c -fPIC $(FLAGS)
+OFLAGS = $(FLAGS)
+AFLAGS = rs
+
+SRCS= adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
+       zutil.c inflate.c infblock.c inftrees.c infcodes.c infutil.c inffast.c
+
+all: ./$(OUTPATH)/libz.a ./$(OUTPATH)/minigzip
+     
+./$(OUTPATH)/libz.a: $(SRCS)	
+	mkdir -p $(OUTPATH)
+	$(CC) $(CFLAGS) -o $(OUTPATH)/adler32.o adler32.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/compress.o compress.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/crc32.o crc32.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/gzio.o gzio.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/uncompr.o uncompr.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/deflate.o deflate.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/trees.o trees.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/zutil.o zutil.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inflate.o inflate.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infblock.o infblock.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inftrees.o inftrees.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infcodes.o infcodes.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infutil.o infutil.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inffast.o inffast.c
+	
+	$(AR) $(AFLAGS) $(OUTPATH)/libz.a $(OUTPATH)/adler32.o $(OUTPATH)/compress.o $(OUTPATH)/crc32.o $(OUTPATH)/gzio.o $(OUTPATH)/uncompr.o \
+	$(OUTPATH)/deflate.o $(OUTPATH)/trees.o $(OUTPATH)/zutil.o $(OUTPATH)/inflate.o $(OUTPATH)/infblock.o $(OUTPATH)/inftrees.o \
+	$(OUTPATH)/infcodes.o $(OUTPATH)/infutil.o $(OUTPATH)/inffast.o
+	mkdir -p ../lib/$(OUTPATH)
+	cp $(OUTPATH)/libz.a ../lib/$(OUTPATH)
+
+./$(OUTPATH)/minigzip: minigzip.c ./$(OUTPATH)/libz.a
+	$(CC) $(OFLAGS) minigzip.c ./$(OUTPATH)/libz.a -o ./$(OUTPATH)/minigzip
+	chmod +x $(OUTPATH)/minigzip

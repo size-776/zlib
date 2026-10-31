@@ -1,0 +1,48 @@
+CC= cl
+LINK= link
+LIB= lib
+
+#DEBUG= 1\
+
+PLATFORM= x86
+
+!IFDEF DEBUG
+CONFIG= Debug
+!ELSE
+CONFIG= Release
+!ENDIF
+
+OUTPATH= .\bin\$(PLATFORM)\$(CONFIG)\\
+LIBPATH1= "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Tools\MSVC\14.16.27023\lib\x86"
+LIBPATH2= "C:\Program Files (x86)\Windows Kits\10\Lib\10.0.17763.0\um\x86"
+LIBPATH3= "C:\Program Files (x86)\Windows Kits\10\Lib\10.0.17763.0\ucrt\x86"
+LPATHS= /LIBPATH:$(OUTPATH) /LIBPATH:$(LIBPATH1) /LIBPATH:$(LIBPATH2) /LIBPATH:$(LIBPATH3)
+
+!IFDEF DEBUG
+CFLAGS=/c /Fo$(OUTPATH) -DDEBUG
+LFLAGS= $(LPATHS) 
+!ELSE
+CFLAGS=-Os /c /Fo$(OUTPATH) 
+LFLAGS= $(LPATHS) 
+!ENDIF
+
+SRCS= adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
+       zutil.c inflate.c infblock.c inftrees.c infcodes.c infutil.c inffast.c
+
+OBJS= adler32.obj compress.obj crc32.obj gzio.obj uncompr.obj deflate.obj trees.obj \
+       zutil.obj inflate.obj infblock.obj inftrees.obj infcodes.obj infutil.obj inffast.obj
+
+all: example.exe
+     
+test: all
+      REM echo Run Example!
+	  $(OUTPATH)example.exe
+	   
+example.exe: example.c $(OUTPATH)zlib.lib
+    $(CC) $(CFLAGS) example.c 
+	$(LINK) $(LFLAGS) example.obj zlib.lib /OUT:$(OUTPATH)example.exe
+
+$(OUTPATH)zlib.lib: $(SRCS)	   
+       mkdir $(OUTPATH)	 
+	   $(CC) $(CFLAGS) $(SRCS)
+	   $(LIB) $(LFLAGS) $(OBJS) /OUT:$(OUTPATH)"zlib.lib"

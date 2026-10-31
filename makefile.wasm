@@ -1,0 +1,57 @@
+# 20210128 makefile for WASM
+
+EMSDK= C:\emsdk\upstream\emscripten
+CC= $(EMSDK)\emcc 
+CPP= $(EMSDK)\em++
+LINK= gcc
+AR= $(EMSDK)\emar
+
+DEBUG= 1
+
+PLATFORM= WASM
+
+BUILD= Debug
+OFLAGS += -O0 -g -D_DEBUG
+
+#mkdir -p $(OUTPATH)
+# gmake RELEASE=1
+ifeq ($(RELEASE), 1)
+BUILD= Release
+OFLAGS = -O2 -s -DNDEBUG
+endif
+
+OUTPATH= $(BUILD)_$(PLATFORM)
+
+CFLAGS= -O3 -c -s WASM=1 $(OFLAGS) \
+-I../EasyViewLib -I../sqlite3 -I../zlib
+
+LFLAGS= -Wl,-b64 -maix64 -lstdc++ -lpthread -lm
+AFLAGS= rs
+
+SRCS= adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
+       zutil.c inflate.c infblock.c inftrees.c infcodes.c infutil.c inffast.c
+
+all: libz.a
+     
+libz.a: $(SRCS)	
+	$(CC) $(CFLAGS) -o $(OUTPATH)/adler32.bc adler32.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/compress.bc compress.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/crc32.bc crc32.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/gzio.bc gzio.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/uncompr.bc uncompr.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/deflate.bc deflate.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/trees.bc trees.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/zutil.bc zutil.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inflate.bc inflate.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infblock.bc infblock.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inftrees.bc inftrees.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infcodes.bc infcodes.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infutil.bc infutil.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inffast.bc inffast.c
+	
+	$(AR) $(AFLAGS) $(OUTPATH)/libz.a $(OUTPATH)/adler32.bc $(OUTPATH)/compress.bc $(OUTPATH)/crc32.bc $(OUTPATH)/gzio.bc $(OUTPATH)/uncompr.bc \
+	$(OUTPATH)/deflate.bc $(OUTPATH)/trees.bc $(OUTPATH)/zutil.bc $(OUTPATH)/inflate.bc $(OUTPATH)/infblock.bc $(OUTPATH)/inftrees.bc \
+	$(OUTPATH)/infcodes.bc $(OUTPATH)/infutil.bc $(OUTPATH)/inffast.bc
+	
+	copy $(OUTPATH)\libz.a ..\lib\Win32\$(BUILD)_$(PLATFORM)
+	

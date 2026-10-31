@@ -1,0 +1,60 @@
+# 20260102 sqlite3 makefile for WSL
+
+CC= gcc 
+LINK= gcc
+AR= ar
+
+DEBUG= 1
+
+PLATFORM= x64
+PFLAGS= -m64
+
+BUILD= Debug
+OFLAGS += -O0 -g -D_DEBUG
+
+ifeq ($(RELEASE), 1)
+BUILD= Release
+OFLAGS = -O3 -s -DNDEBUG
+endif
+
+ifeq ($(X32), 1)
+PLATFORM= x32
+PFLAGS = -m32
+endif
+
+OUTPATH= ./bin/UNIX_$(PLATFORM)_$(BUILD)
+
+CFLAGS= -c -fPIC $(OFLAGS) $(PFLAGS) \
+-I../EasyViewLib -I../sqlite3 -I../zlib
+
+#AGS= -Wl,-b64 -maix64 -lstdc++ -lpthread -lm
+AFLAGS= rs
+
+SRCS= adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
+       zutil.c inflate.c infblock.c inftrees.c infcodes.c infutil.c inffast.c
+
+all: ../lib/$(OUTPATH)/libz.a
+     
+../lib/$(OUTPATH)/libz.a: $(SRCS)	
+	mkdir -p $(OUTPATH)
+	$(CC) $(CFLAGS) -o $(OUTPATH)/adler32.bc adler32.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/compress.bc compress.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/crc32.bc crc32.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/gzio.bc gzio.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/uncompr.bc uncompr.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/deflate.bc deflate.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/trees.bc trees.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/zutil.bc zutil.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inflate.bc inflate.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infblock.bc infblock.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inftrees.bc inftrees.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infcodes.bc infcodes.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/infutil.bc infutil.c
+	$(CC) $(CFLAGS) -o $(OUTPATH)/inffast.bc inffast.c
+	
+	$(AR) $(AFLAGS) $(OUTPATH)/libz.a $(OUTPATH)/adler32.bc $(OUTPATH)/compress.bc $(OUTPATH)/crc32.bc $(OUTPATH)/gzio.bc $(OUTPATH)/uncompr.bc \
+	$(OUTPATH)/deflate.bc $(OUTPATH)/trees.bc $(OUTPATH)/zutil.bc $(OUTPATH)/inflate.bc $(OUTPATH)/infblock.bc $(OUTPATH)/inftrees.bc \
+	$(OUTPATH)/infcodes.bc $(OUTPATH)/infutil.bc $(OUTPATH)/inffast.bc
+	
+	cp $(OUTPATH)/libz.a ../lib/$(OUTPATH)
+	
